@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KM ↔ Miles Converter</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F7F3EE;
+      --card: #FFFFFF;
+      --ink: #1A1208;
+      --muted: #8A7A6A;
+      --amber: #C4883A;
+      --amber-light: #FDF3E3;
+      --amber-dark: #8B5E1A;
+      --green: #2A6A3A;
+      --green-light: #EAF5EE;
+      --border: #E8E0D4;
+      --shadow: 0 8px 32px rgba(26,18,8,0.10);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 24px;
+      padding: 44px 40px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .header-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* Direction toggle */
+    .direction-toggle {
+      display: flex;
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 28px;
+      border: 1px solid var(--border);
+    }
+
+    .dir-btn {
+      flex: 1;
+      padding: 10px 8px;
+      border: none;
+      background: none;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--muted);
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .dir-btn.active {
+      background: var(--amber);
+      color: white;
+      box-shadow: 0 2px 10px rgba(196,136,58,0.30);
+    }
+
+    .dir-btn:hover:not(.active) {
+      color: var(--ink);
+      background: var(--border);
+    }
+
+    /* Input group */
+    .input-group {
+      margin-bottom: 24px;
+    }
+
+    .input-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .unit-badge {
+      background: var(--amber-light);
+      color: var(--amber);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .number-input {
+      width: 100%;
+      padding: 14px 60px 14px 18px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 20px;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--ink);
+      background: var(--card);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -moz-appearance: textfield;
+    }
+
+    .number-input::-webkit-outer-spin-button,
+    .number-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .number-input:focus {
+      border-color: var(--amber);
+      box-shadow: 0 0 0 4px rgba(196,136,58,0.12);
+    }
+
+    .number-input.error {
+      border-color: #E05A3A;
+      box-shadow: 0 0 0 4px rgba(224,90,58,0.10);
+    }
+
+    .input-unit {
+      position: absolute;
+      right: 16px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .error-msg {
+      font-size: 12px;
+      color: #E05A3A;
+      margin-top: 7px;
+      display: none;
+    }
+
+    .error-msg.show { display: block; }
+
+    /* Convert button */
+    .convert-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--amber) 0%, var(--amber-dark) 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+      box-shadow: 0 4px 16px rgba(196,136,58,0.28);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .convert-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 22px rgba(196,136,58,0.38);
+    }
+
+    .convert-btn:active { transform: translateY(0); }
+
+    /* Result box */
+    .result-box {
+      background: var(--green-light);
+      border: 2px solid rgba(42,106,58,0.2);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      display: none;
+      animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .result-box.show { display: block; }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.94) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .result-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 10px;
+    }
+
+    .result-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px;
+      font-weight: 700;
+      color: var(--green);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .result-unit {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(42,106,58,0.65);
+    }
+
+    .result-formula {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(42,106,58,0.15);
+      font-size: 12px;
+      color: rgba(42,106,58,0.6);
+      font-style: italic;
+    }
+
+    /* Swap button */
+    .swap-row {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .swap-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 7px 18px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .swap-btn:hover {
+      border-color: var(--amber);
+      color: var(--amber);
+      background: var(--amber-light);
+    }
+
+    .swap-icon { font-size: 14px; transition: transform 0.3s; }
+    .swap-btn:hover .swap-icon { transform: rotate(180deg); }
+
+    /* Quick reference */
+    .quick-ref {
+      margin-top: 28px;
+      padding-top: 22px;
+      border-top: 1px solid var(--border);
+    }
+
+    .qr-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .qr-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .qr-chip {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .qr-chip:hover {
+      border-color: var(--amber);
+      background: var(--amber-light);
+    }
+
+    .qr-val { font-size: 13px; font-weight: 700; color: var(--ink); }
+    .qr-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="header">
+    <span class="header-icon">🗺️</span>
+    <h1>Unit Converter</h1>
+    <p>Kilometres ↔ Miles — instant, accurate conversion</p>
+  </div>
+
+  <!-- Direction toggle -->
+  <div class="direction-toggle">
+    <button class="dir-btn active" id="btn-km-mi" onclick="setDirection('km-mi')">
+      🇰🇲 Kilometres → Miles
+    </button>
+    <button class="dir-btn" id="btn-mi-km" onclick="setDirection('mi-km')">
+      🇺🇸 Miles → Kilometres
+    </button>
+  </div>
+
+  <!-- Input -->
+  <div class="input-group">
+    <div class="input-label">
+      Enter value
+      <span class="unit-badge" id="inputUnitBadge">KM</span>
+    </div>
+    <div class="input-wrap">
+      <input
+        type="number"
+        class="number-input"
+        id="inputValue"
+        placeholder="0"
+        min="0"
+        step="any"
+        oninput="onInput()"
+        onkeydown="if(event.key==='Enter') convert()"
+      />
+      <span class="input-unit" id="inputUnitLabel">km</span>
+    </div>
+    <div class="error-msg" id="errorMsg">Please enter a valid number (0 or greater).</div>
+  </div>
+
+  <!-- Swap -->
+  <div class="swap-row">
+    <button class="swap-btn" onclick="swapDirection()">
+      <span class="swap-icon">⇄</span> Swap direction
+    </button>
+  </div>
+
+  <!-- Convert button -->
+  <button class="convert-btn" onclick="convert()">
+    ⚡ Convert
+  </button>
+
+  <!-- Result -->
+  <div class="result-box" id="resultBox">
+    <div class="result-label" id="resultLabel">Result</div>
+    <div class="result-value" id="resultValue">—</div>
+    <div class="result-unit" id="resultUnit">miles</div>
+    <div class="result-formula" id="resultFormula"></div>
+  </div>
+
+  <!-- Quick reference chips -->
+  <div class="quick-ref">
+    <div class="qr-title">Quick examples — click to convert</div>
+    <div class="qr-grid" id="quickGrid"></div>
+  </div>
+
+</div>
+
+<div class="footer-note">
+  1 kilometre = 0.621371 miles &nbsp;·&nbsp; 1 mile = 1.60934 kilometres
+</div>
+
+<script>
+  const KM_TO_MI = 0.621371;
+  const MI_TO_KM = 1.60934;
+
+  let direction = 'km-mi';
+
+  const QUICK = {
+    'km-mi': [
+      {val:1,   lbl:'1 km'},
+      {val:5,   lbl:'5 km'},
+      {val:10,  lbl:'10 km'},
+      {val:42.195, lbl:'Marathon'},
+      {val:100, lbl:'100 km'},
+      {val:1000,lbl:'1,000 km'},
+    ],
+    'mi-km': [
+      {val:1,   lbl:'1 mile'},
+      {val:3.1, lbl:'5K race'},
+      {val:6.2, lbl:'10K race'},
+      {val:26.2,lbl:'Marathon'},
+      {val:60,  lbl:'60 mph/h'},
+      {val:621, lbl:'621 miles'},
+    ]
+  };
+
+  function setDirection(dir) {
+    direction = dir;
+    document.getElementById('btn-km-mi').classList.toggle('active', dir === 'km-mi');
+    document.getElementById('btn-mi-km').classList.toggle('active', dir === 'mi-km');
+    document.getElementById('inputUnitBadge').textContent = dir === 'km-mi' ? 'KM' : 'MI';
+    document.getElementById('inputUnitLabel').textContent  = dir === 'km-mi' ? 'km' : 'mi';
+    clearResult();
+    renderQuick();
+  }
+
+  function swapDirection() {
+    setDirection(direction === 'km-mi' ? 'mi-km' : 'km-mi');
+    const inp = document.getElementById('inputValue');
+    if (inp.value) convert();
+  }
+
+  function onInput() {
+    clearError();
+    const inp = document.getElementById('inputValue');
+    if (inp.value !== '' && !isNaN(inp.value)) {
+      convert(true);
+    } else {
+      clearResult();
+    }
+  }
+
+  function convert(silent = false) {
+    const inp  = document.getElementById('inputValue');
+    const raw  = inp.value.trim();
+    const num  = parseFloat(raw);
+
+    if (raw === '' || isNaN(num) || num < 0) {
+      if (!silent) showError();
+      return;
+    }
+
+    clearError();
+
+    const result = direction === 'km-mi'
+      ? num * KM_TO_MI
+      : num * MI_TO_KM;
+
+    const fromUnit = direction === 'km-mi' ? 'km'   : 'mile' + (num !== 1 ? 's' : '');
+    const toUnit   = direction === 'km-mi' ? 'miles' : 'kilometres';
+    const factor   = direction === 'km-mi' ? KM_TO_MI : MI_TO_KM;
+    const fLabel   = direction === 'km-mi'
+      ? `${formatNum(num)} km × 0.621371 = ${formatNum(result)} miles`
+      : `${formatNum(num)} mi × 1.60934 = ${formatNum(result)} km`;
+
+    document.getElementById('resultLabel').textContent = 'Converted Result';
+    document.getElementById('resultValue').textContent = formatNum(result);
+    document.getElementById('resultUnit').textContent  = toUnit;
+    document.getElementById('resultFormula').textContent = fLabel;
+
+    const box = document.getElementById('resultBox');
+    box.classList.remove('show');
+    void box.offsetWidth;
+    box.classList.add('show');
+  }
+
+  function formatNum(n) {
+    if (Number.isInteger(n)) return n.toLocaleString();
+    const rounded = Math.round(n * 10000) / 10000;
+    return rounded.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 4
+    });
+  }
+
+  function showError() {
+    document.getElementById('inputValue').classList.add('error');
+    document.getElementById('errorMsg').classList.add('show');
+  }
+
+  function clearError() {
+    document.getElementById('inputValue').classList.remove('error');
+    document.getElementById('errorMsg').classList.remove('show');
+  }
+
+  function clearResult() {
+    document.getElementById('resultBox').classList.remove('show');
+  }
+
+  function renderQuick() {
+    const grid = document.getElementById('quickGrid');
+    const chips = QUICK[direction];
+    const toUnit = direction === 'km-mi' ? 'mi' : 'km';
+    grid.innerHTML = chips.map(c => {
+      const res = direction === 'km-mi'
+        ? c.val * KM_TO_MI
+        : c.val * MI_TO_KM;
+      return `<div class="qr-chip" onclick="quickSet(${c.val})">
+        <div class="qr-val">${formatNum(res)} ${toUnit}</div>
+        <div class="qr-lbl">${c.lbl}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function quickSet(val) {
+    document.getElementById('inputValue').value = val;
+    clearError();
+    convert();
+  }
+
+  renderQuick();
+</script>
+
+</body>
+</html>
